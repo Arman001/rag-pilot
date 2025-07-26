@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Cache, temp, or build
+.cache/
+cache/
+*.tmp
+*.bak
+
+# Vector stores & embeddings
+vectorstore/
+*.faiss
+*.pkl
+*.onnx
+
+# Hugging Face model cache (adjust if needed)
+huggingface/
+models/
+model/
+snapshots/
+*.bin
+*.json
+
+# Test artifacts
+htmlcov/
+coverage.xml
+*.cover
+*.pytest_cache/
+.pytest_cache/
+
+# Data files
+data/raw/
+data/processed/
+*.md
+
+# Local config / secrets
+config/settings_local.py
+.env
+.env.*
+
+# Requirements backup
+requirements_2.txt
+
+# Notebook outputs (if any used)
+*.ipynb
