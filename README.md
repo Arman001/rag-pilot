@@ -103,17 +103,57 @@ print(response)
 ```
 
 ## 🏗️ Architecture
-``` bash
+
+```mermaid
 graph TD
-    A[Raw Docs] --> B[Markdown Processing]
-    B --> C[Text Chunking]
-    C --> D[FastEmbed Encoding]
-    D --> E[FAISS Vector Store]
-    F[User Query] --> G[Query Embedding]
-    G --> H[Semantic Search]
-    H --> I[Context Augmentation]
-    I --> J[Gemini Generation]
-    J --> K[Validated Response]
+    %% Data Flow
+    A[Raw Docs: LangChain] --> B[Scrape/Clean\nBeautifulSoup]
+    B --> C[Chunk Text\n512 tokens + 50 overlap]
+    C --> D[Generate Embeddings\nBGE-small or FastEmbed]
+    D --> E[Vector DB\nFAISS/ChromaDB]
+
+    %% Query Flow
+    F[User Query\nvia Streamlit] --> G[Embed Query]
+    G --> H[Retrieve Top-3 Chunks\nHybrid: BM25 + Vector]
+    H --> I[Inject into Prompt Template]
+    I --> J[LLM Generation\nGemini Pro - Free Tier]
+    J --> K[Format Response\nCitations + code blocks]
+    K --> L[Streamlit UI Output]
+
+    %% Evaluation
+    H --> M[RAGAS Evaluation\nContext Precision]
+    J --> N[RAGAS Evaluation\nFaithfulness]
+    D --> O[Compare Embeddings\nBGE vs FastEmbed]
+
+    %% Maintenance
+    P[Monthly GitHub Action] --> Q[Re-scrape Docs]
+    Q --> R[Re-embed Chunks]
+    R --> E
+
+    %% Grouping
+    subgraph "Data Pipeline (Free)"
+        A --> B --> C --> D --> E
+    end
+    subgraph "RAG Pipeline (Gemini)"
+        F --> G --> H --> I --> J --> K --> L
+    end
+    subgraph "Evaluation"
+        M & N & O
+    end
+    subgraph "Maintenance"
+        P --> Q --> R --> E
+    end
+
+    %% Styling
+    classDef data fill:#e6f3ff,stroke:#4682b4,color:black;
+    classDef rag fill:#ffe6f2,stroke:#db7093,color:black;
+    classDef eval fill:#e6ffe6,stroke:#2e8b57,color:black;
+    classDef maint fill:#fff2cc,stroke:#ffa500,color:black;
+    class A,B,C,D,E data;
+    class F,G,H,I,J,K,L rag;
+    class M,N,O eval;
+    class P,Q,R maint;
+	
 ```
 ## 🤝 Contributing
 1. Fork the repository
