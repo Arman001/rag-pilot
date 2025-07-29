@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Enhanced RAG Pipeline with optimized retrieval and response generation"""
 
+from pathlib import Path
+import os
 import google.generativeai as genai
 import numpy as np
 import time
@@ -65,10 +67,15 @@ class RAGPipeline:
         """Load and validate vector store"""
         try:
             self.vectorstore = FAISS.load_local(
-                settings.VECTORSTORE_DIR,
-                FastEmbedEmbeddings(model_name=settings.EMBEDDING_MODEL),
-                allow_dangerous_deserialization=True,
-            )
+            settings.VECTORSTORE_DIR,
+            FastEmbedEmbeddings(
+                model_name=settings.EMBEDDING_MODEL,
+                cache_dir=str(Path(settings.CACHE_DIR).absolute()),
+                threads=min(4, (os.cpu_count() or 1)),
+                show_progress_bar=True,
+            ),
+            allow_dangerous_deserialization=True,
+        )
             print(f"✅ Vectorstore loaded with {self.vectorstore.index.ntotal} documents")
             
             # Verify embedding dimensions
@@ -114,7 +121,7 @@ class RAGPipeline:
         good_query = "LangChain framework"
         emb = FastEmbedEmbeddings().embed_query(good_query)
         scores = np.array([
-            np.dot(emb, self.vectorstore.index.reconstruct_n(i))
+            np.dot(emb, self.vectorstore.index.reconstruct(i))
             for i in range(min(10, self.vectorstore.index.ntotal))
         ])
         print(f"Average similarity for known good query: {np.mean(scores):.3f}")
@@ -153,18 +160,34 @@ class RAGPipeline:
         )
 
     def query(self, question: str) -> str:
-        """Execute full RAG pipeline with enhanced debugging"""
+        """Run full RAG pipeline on input question and return LLM response"""
+        print("query is called with question:", question)
         try:
-            # Get documents with scores
+            # Search vectorstore for top 5 most similar chunks
             docs_with_scores = self.vectorstore.similarity_search_with_score(question, k=5)
-            
+
             print(f"\n🔎 Retrieved {len(docs_with_scores)} chunks for: '{question}'")
             for i, (doc, score) in enumerate(docs_with_scores):
                 print(f"\n📌 Chunk {i+1} (Score: {score:.3f})")
                 print(f"🆔 ID: {doc.metadata.get('chunk_id', 'N/A')}")
                 print(f"📝 Content:\n{doc.page_content[:200]}...")
 
-            return self.chain.invoke(question)
-            
+            docs = [doc for doc, _ in docs_with_scores]
+            formatted_context = self._format_docs(docs)
+
+            # Pass formatted context and question to the chain
+            result = self.chain.invoke({
+                "context": formatted_context,
+                "question": question
+            })
+
+            return result
+
         except Exception as e:
             return f"⚠️ Error processing query: {str(e)}"
+
+# create a singleton pipeline instance
+rag_pipeline = RAGPipeline()
+
+# Expose the chain for external use
+qa_chain = rag_pipeline.chain
