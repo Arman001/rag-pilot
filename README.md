@@ -179,4 +179,4 @@ Distributed under the MIT License.
 
 ## ✉️ Contact
 **Website**: [muhammadsaad.dev](https://www.muhammadsaad.dev/)
-**Email**: hell@muhammadsaad.dev
+**Email**: hello@muhammadsaad.dev
